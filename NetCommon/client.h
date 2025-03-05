@@ -24,12 +24,17 @@ namespace net
 		{
 			try
 			{
-				m_connection = std::make_unique<connection<Data>>();
 				asio::ip::tcp::resolver resolver(m_asioContext);
-				// TODO:
-				//auto m_endpoint = resolver.resolve(host, std::to_string(port));
+				auto endPoints = resolver.resolve(host, std::to_string(port));
 
-				//m_connection->ConnectToServer(m_endpoints);
+				m_connection = std::make_unique<connection<Data>>(
+					connection<Data>::Owner::Client,
+					m_asioContext,
+					asio::ip::tcp::socket(m_asioContext),
+					m_messagesIn
+				);
+
+				m_connection->ConnectToServer(endPoints);
 
 				m_threadContext = std::jthread([this]()
 					{

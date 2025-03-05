@@ -57,9 +57,8 @@ namespace net
 					if (!errorCode)
 					{
 						std::cout << "[SERVER] New Connection: " << socket.remote_endpoint() << std::endl;
-						/*
-						std::shared_ptr<connection<Data>> newConnection =
-							std::make_shared<connection<Data>>(connection<Data>::owner::server, m_asioContext, std::move(socket), m_messagesIn);
+
+						std::shared_ptr<connection<Data>> newConnection = std::make_shared<connection<Data>>(connection<Data>::Owner::Server, m_asioContext, std::move(socket), m_messagesIn);
 
 						if (OnClientConnect(newConnection))
 						{
@@ -72,7 +71,7 @@ namespace net
 						else
 						{
 							std::cout << "[-----] Connection Denied!" << std::endl;
-						}*/
+						}
 					}
 					else
 					{
