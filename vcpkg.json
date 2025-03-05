@@ -1,0 +1,6 @@
+{
+    "name": "calculator",
+    "dependencies": [
+      "asio"
+    ]
+  }
