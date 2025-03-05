@@ -6,27 +6,27 @@
 
 namespace net
 {
-    template <typename Data>
-    class ClientInterface
-    {
-    public:
-        ClientInterface() : m_socket(m_asioContext)
-        {
+	template <typename Data>
+	class ClientInterface
+	{
+	public:
+		ClientInterface() : m_socket(m_asioContext)
+		{
 
-        }
+		}
 
-        virtual ~ClientInterface()
-        {
-            Disconnect();
-        }
+		virtual ~ClientInterface()
+		{
+			Disconnect();
+		}
 
-        bool Connect(const std::string& host, const uint16_t port)
-        {
-            try
-            {
+		bool Connect(const std::string& host, const uint16_t port)
+		{
+			try
+			{
 				m_connection = std::make_unique<connection<Data>>();
 				asio::ip::tcp::resolver resolver(m_asioContext);
-                // TODO:
+				// TODO:
 				//auto m_endpoint = resolver.resolve(host, std::to_string(port));
 
 				//m_connection->ConnectToServer(m_endpoints);
@@ -41,11 +41,11 @@ namespace net
 				std::cerr << "Client Exception: " << e.what() << "\n";
 				return false;
 			}
-            return false;
-        }
+			return false;
+		}
 
-        void Disconnect()
-        {
+		void Disconnect()
+		{
 			if (IsConnected())
 			{
 				m_connection->Disconnect();
@@ -58,29 +58,29 @@ namespace net
 				m_threadContext.join();
 			}
 
-            m_connection.release();
-        }
+			m_connection.release();
+		}
 
-        bool IsConnected() const
-        {
-            if (m_connection)
-            {
-                return m_connection->IsConnected();
-            }
-            return false;
-        }
+		bool IsConnected() const
+		{
+			if (m_connection)
+			{
+				return m_connection->IsConnected();
+			}
+			return false;
+		}
 
-        ThreadSafeQueue<owned_message<Data>>& Incoming()
-        {
-            return m_messagesIn;
-        }
+		ThreadSafeQueue<owned_message<Data>>& Incoming()
+		{
+			return m_messagesIn;
+		}
 
-    protected:
-        asio::io_context m_asioContext;
-        std::jthread m_threadContext;
-        asio::ip::tcp::socket m_socket;
-        std::unique_ptr<connection<Data>> m_connection;
-    private:
-        ThreadSafeQueue<owned_message<Data>> m_messagesIn;
-    };
+	protected:
+		asio::io_context m_asioContext;
+		std::jthread m_threadContext;
+		asio::ip::tcp::socket m_socket;
+		std::unique_ptr<connection<Data>> m_connection;
+	private:
+		ThreadSafeQueue<owned_message<Data>> m_messagesIn;
+	};
 }

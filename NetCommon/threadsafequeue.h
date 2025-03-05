@@ -61,7 +61,7 @@ namespace net
         }
 
     private:
-        std::mutex m_mutex;
+        mutable std::mutex m_mutex;
         std::deque<DataType> m_queue;
     };
 }

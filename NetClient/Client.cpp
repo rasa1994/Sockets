@@ -1,6 +1,7 @@
 #include <iostream>
 #include "includes.h"
 #include "client.h"
+#include "server.h"
 
 enum class MessageType : uint32_t
 {
@@ -11,29 +12,40 @@ enum class MessageType : uint32_t
     ServerMessage,
 };
 
+class CustomServer : public net::ServerInterface<MessageType>
+{
+public:
+    CustomServer(uint16_t port) : net::ServerInterface<MessageType>(port)
+    {
+
+    }
+protected:
+    virtual bool OnClientConnect(std::shared_ptr<net::connection<MessageType>> client)
+    {
+        return true;
+    }
+
+    virtual void OnClientDisconnect(std::shared_ptr<net::connection<MessageType>> client)
+    {
+
+    }
+
+    virtual void OnMessage(std::shared_ptr<net::connection<MessageType>> client, const net::message<MessageType>& message)
+    {
+
+    }
+};
+
 int main()
 {
-    net::message<MessageType> msg;
-    msg.header.id = MessageType::ServerAccept;
+    CustomServer server(60000);
+    server.Start();
 
-    int a = 1;
-    bool b = true;
-    float c = 3.141592f;
-
-    struct 
+    while (true)
     {
-        int x;
-        int y;
-    } d[5];
+        server.Update();
+    }
 
-    msg << a << b << c << d;
-
-    a = 10;
-    b = false;
-    c = 1.0f;
-	msg >> d >> c >> b >> a;
-
-    std::cout << std::boolalpha;
-	std::cout << a << " " << b << " " << c << std::endl;
+    return 0;
 }
 
