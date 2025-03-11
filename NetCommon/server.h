@@ -64,7 +64,7 @@ namespace net
 						{
 							m_connections.push_back(std::move(newConnection));
 
-							m_connections.back()->ConnectToClient(IdCounter++);
+							m_connections.back()->ConnectToClient(this, IdCounter++);
 
 							std::cout << "[" << m_connections.back()->GetId() << "] Connection Approved!" << std::endl;
 						}
@@ -119,8 +119,12 @@ namespace net
 				m_connections.erase(std::ranges::remove(m_connections, nullptr), m_connections.end());
 		}
 
-		void Update(size_t maxMessages = std::numeric_limits<size_t>::max())
+		void Update(size_t maxMessages = std::numeric_limits<size_t>::max(), bool wait = false)
 		{
+
+			if (wait)
+				m_messagesIn.wait();
+
 			size_t messageCount = 0;
 			while (messageCount < maxMessages && !m_messagesIn.empty())
 			{
@@ -132,7 +136,6 @@ namespace net
 			}
 		}
 
-	protected:
 		virtual bool OnClientConnect(std::shared_ptr<connection<Data>> client)
 		{
 			return false;
@@ -148,6 +151,12 @@ namespace net
 
 		}
 
+		virtual void OnClientValidated(std::shared_ptr<connection<Data>> client)
+		{
+
+		}
+
+	protected:
 		ThreadSafeQueue<net::owned_message<Data>> m_messagesIn;
 
 		std::deque<std::shared_ptr<connection<Data>>> m_connections;

@@ -16,7 +16,4 @@ find_package(asio CONFIG REQUIRED)
 add_executable(main Main.cpp)
 
 add_subdirectory(NetCommon)
-add_subdirectory(NetClient)
-
-
 target_link_libraries(main PRIVATE asio::asio)

@@ -26,12 +26,18 @@ namespace net
         {
             std::lock_guard lock(m_mutex);
             m_queue.emplace_back(std::move(item));
+
+            std::unique_lock lockMutex(m_mutexWaiting);
+            m_cvWaiting.notify_one();
         }
 
         void push_front(const DataType& item)
         {
             std::lock_guard lock(m_mutex);
             m_queue.emplace_front(std::move(item));
+
+            std::unique_lock lockMutex(m_mutexWaiting);
+            m_cvWaiting.notify_one();
         }
 
         bool empty() const
@@ -60,8 +66,19 @@ namespace net
             return elem;
         }
 
+        void wait()
+        {
+            while (empty())
+            {
+                std::unique_lock lock(m_mutexWaiting);
+                m_cvWaiting.wait(lock);
+            }
+        }
+
     private:
         mutable std::mutex m_mutex;
         std::deque<DataType> m_queue;
+        std::condition_variable m_cvWaiting;
+        std::mutex m_mutexWaiting;
     };
 }

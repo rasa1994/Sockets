@@ -7,6 +7,9 @@
 namespace net
 {
 	template <typename Data>
+	class ServerInterface;
+
+	template <typename Data>
 	class connection : public std::enable_shared_from_this<connection<Data>>
 	{
 	public:
@@ -20,7 +23,15 @@ namespace net
 		connection(Owner owner, asio::io_context& asioContext, asio::ip::tcp::socket socket, ThreadSafeQueue<net::owned_message<Data>>& messageQueue) :
 			m_asioContext(asioContext), m_socket(std::move(socket)), m_messagesIn(messageQueue), m_owner(owner)
 		{
-
+			if (m_owner == Owner::Server)
+			{
+				m_handShakeOut = uint32_t(std::chrono::system_clock::now().time_since_epoch().count());
+				m_handShakeCheck = Encrypt(m_handShakeOut);
+			}
+			{
+				m_handShakeIn = 0;
+				m_handShakeCheck = 0;
+			}
 		}
 
 		virtual ~connection()
@@ -37,7 +48,7 @@ namespace net
 					{
 						if (!errorCode)
 						{
-							ReadHeader();
+							ReadValidation();
 						}
 					});
 			}
@@ -70,16 +81,75 @@ namespace net
 		}
 		uint32_t GetId() const { return m_id; }
 
-		void ConnectToClient(uint32_t id = 0)
+		void ConnectToClient(net::ServerInterface<Data>* server, uint32_t id = 0)
 		{
 			if (m_owner == Owner::Server)
 			{
 				if (m_socket.is_open())
 				{
 					m_id = id;
-					ReadHeader();
+					WriteValidation();
+					ReadValidation(server);
 				}
 			}
+		}
+
+		uint64_t Encrypt(uint64_t data)
+		{
+			auto result = data ^ 0xBAADCAFEBAADCAFE;
+			result = (result & 0x00FF00FF00FF00FF) << 8 | (result & 0x00FF00FF00FF00FF) >> 8;
+			return result ^ 0xC0DEFACE12345678;
+		}
+
+		void WriteValidation()
+		{
+			asio::async_write(m_socket, asio::buffer(&m_handShakeOut, sizeof(uint32_t)),
+				[this](std::error_code errorCode, std::size_t length)
+				{
+					if (!errorCode)
+					{
+						if (m_owner == Owner::Client)
+							ReadHeader();
+					}
+					else
+					{
+						m_socket.close();
+					}
+				});
+		}
+
+		void ReadValidation(net::ServerInterface<Data>* server = nullptr)
+		{
+			asio::async_read(m_socket, asio::buffer(&m_handShakeIn, sizeof(uint64_t)),
+				[this, server](std::error_code errorCode, std::size_t length)
+				{
+					if (!errorCode)
+					{
+						if (m_owner == Owner::Server)
+						{
+							if (m_handShakeIn == m_handShakeCheck)
+							{
+								std::cout << "Client Validated" << std::endl;
+								server->OnClientValidated(this->shared_from_this());
+								ReadHeader();
+							}
+							else
+							{
+								std::cout << "Client Disconnected (Fail Validation)" << std::endl;
+								m_socket.close();
+							}
+						}
+						else
+						{
+							m_handShakeOut = Encrypt(m_handShakeIn);
+							WriteValidation();
+						}
+					}
+					else
+					{
+						m_socket.close();
+					}
+				});
 		}
 
 	protected:
@@ -89,6 +159,10 @@ namespace net
 		asio::io_context& m_asioContext;
 		ThreadSafeQueue<message<Data>> m_messagesOut;
 		ThreadSafeQueue<owned_message<Data>>& m_messagesIn;
+
+		uint32_t m_handShakeOut{ 0 };
+		uint32_t m_handShakeIn{ 0 };
+		uint32_t m_handShakeCheck{ 0 };
 
 	private:
 		void ReadHeader()
