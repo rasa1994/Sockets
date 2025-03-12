@@ -9,16 +9,16 @@
 #include <asio/ts/buffer.hpp>
 #include <asio/ts/internet.hpp>
 
-#include "NetCommon\threadsafequeue.h"
-#include "NetCommon\connection.h"
-#include "NetCommon\client.h"
-#include "NetCommon\server.h"
-#include "NetCommon\message.h"
+#include "Includes\ThreadSafeQueue.hpp"
+#include "Includes\Connection.hpp"
+#include "Includes\ClientInterface.hpp"
+#include "Includes\ServerInterface.hpp"
+#include "Includes\Message.hpp"
 
 int main()
 {
-	net::ServerInterface<net::message_header<size_t>> server(60000);
+	sockets::ServerInterface<sockets::message_header<size_t>> server(60000);
 	server.Start();
 
-	net::ClientInterface<net::message_header<size_t>> client;
+	sockets::ClientInterface<sockets::message_header<size_t>> client;
 }

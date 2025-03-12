@@ -1,7 +1,7 @@
 #pragma once
-#include "common.h"
+#include "CommonIncludes.h"
 
-namespace net
+namespace sockets
 {
     template <typename DataType>
     class ThreadSafeQueue

@@ -1,11 +1,11 @@
 #pragma once
 
-#include "common.h"
-#include "threadsafequeue.h"
-#include "message.h"
-#include "connection.h"
+#include "CommonIncludes.h"
+#include "ThreadSafeQueue.hpp"
+#include "Message.hpp"
+#include "Connection.hpp"
 
-namespace net
+namespace sockets
 {
 	template <typename Data>
 	class ServerInterface
@@ -157,7 +157,7 @@ namespace net
 		}
 
 	protected:
-		ThreadSafeQueue<net::owned_message<Data>> m_messagesIn;
+		ThreadSafeQueue<sockets::owned_message<Data>> m_messagesIn;
 
 		std::deque<std::shared_ptr<connection<Data>>> m_connections;
 

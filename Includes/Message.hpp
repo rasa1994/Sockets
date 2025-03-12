@@ -1,8 +1,8 @@
 #pragma once
 
-#include "common.h"
+#include "CommonIncludes.h"
 
-namespace net
+namespace sockets
 {
     template <typename Type>
     struct message_header

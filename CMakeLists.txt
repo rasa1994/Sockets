@@ -15,5 +15,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(asio CONFIG REQUIRED)
 add_executable(main Main.cpp)
 
-add_subdirectory(NetCommon)
+add_subdirectory(Includes)
+target_sources(main PRIVATE
+ Includes/ClientInterface.hpp
+ Includes/CommonIncludes.h
+ Includes/Connection.hpp
+ Includes/Message.hpp
+ Includes/ServerInterface.hpp
+ Includes/ThreadSafeQueue.hpp
+ )
 target_link_libraries(main PRIVATE asio::asio)

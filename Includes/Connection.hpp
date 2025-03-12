@@ -1,10 +1,10 @@
 #pragma once 
 
-#include "common.h"
-#include "ThreadSafeQueue.h"
-#include "message.h"
+#include "CommonIncludes.h"
+#include "ThreadSafeQueue.hpp"
+#include "Message.hpp"
 
-namespace net
+namespace sockets
 {
 	template <typename Data>
 	class ServerInterface;
@@ -20,7 +20,7 @@ namespace net
 		};
 
 
-		connection(Owner owner, asio::io_context& asioContext, asio::ip::tcp::socket socket, ThreadSafeQueue<net::owned_message<Data>>& messageQueue) :
+		connection(Owner owner, asio::io_context& asioContext, asio::ip::tcp::socket socket, ThreadSafeQueue<sockets::owned_message<Data>>& messageQueue) :
 			m_asioContext(asioContext), m_socket(std::move(socket)), m_messagesIn(messageQueue), m_owner(owner)
 		{
 			if (m_owner == Owner::Server)
@@ -81,7 +81,7 @@ namespace net
 		}
 		uint32_t GetId() const { return m_id; }
 
-		void ConnectToClient(net::ServerInterface<Data>* server, uint32_t id = 0)
+		void ConnectToClient(sockets::ServerInterface<Data>* server, uint32_t id = 0)
 		{
 			if (m_owner == Owner::Server)
 			{
@@ -118,7 +118,7 @@ namespace net
 				});
 		}
 
-		void ReadValidation(net::ServerInterface<Data>* server = nullptr)
+		void ReadValidation(sockets::ServerInterface<Data>* server = nullptr)
 		{
 			asio::async_read(m_socket, asio::buffer(&m_handShakeIn, sizeof(uint64_t)),
 				[this, server](std::error_code errorCode, std::size_t length)

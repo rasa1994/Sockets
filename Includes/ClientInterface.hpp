@@ -1,10 +1,10 @@
 #pragma once
-#include "common.h"
-#include "message.h"
-#include "ThreadSafeQueue.h"
-#include "connection.h"
+#include "CommonIncludes.h"
+#include "Message.hpp"
+#include "ThreadSafeQueue.hpp"
+#include "Connection.hpp"
 
-namespace net
+namespace sockets
 {
 	template <typename Data>
 	class ClientInterface
