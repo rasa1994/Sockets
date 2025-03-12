@@ -25,7 +25,7 @@ namespace sockets
 		{
 			if (m_owner == Owner::Server)
 			{
-				m_handShakeOut = uint32_t(std::chrono::system_clock::now().time_since_epoch().count());
+				m_handShakeOut = static_cast<uint64_t>(std::chrono::system_clock::now().time_since_epoch().count());
 				m_handShakeCheck = Encrypt(m_handShakeOut);
 			}
 			{
@@ -94,16 +94,23 @@ namespace sockets
 			}
 		}
 
-		uint64_t Encrypt(uint64_t data)
+		static uint64_t Encrypt(uint64_t data)
 		{
-			auto result = data ^ 0xBAADCAFEBAADCAFE;
-			result = (result & 0x00FF00FF00FF00FF) << 8 | (result & 0x00FF00FF00FF00FF) >> 8;
-			return result ^ 0xC0DEFACE12345678;
+			data = data ^ 0xDEADBEEFC0DECAFE;
+			data = (data & 0xF0F0F0F0F0F0F0F0) >> 4 | (data & 0x0F0F0F0F0F0F0F0F) << 4;
+			return data ^ 0xC0DEFACE12345678;
+		}
+
+		static uint64_t Decrypt(uint64_t crypt)
+		{
+			crypt = crypt ^ 0xC0DEFACE12345678;
+			crypt = (crypt & 0xF0F0F0F0F0F0F0F0) >> 4 | (crypt & 0x0F0F0F0F0F0F0F0F) << 4;
+			return crypt ^ 0xDEADBEEFC0DECAFE;
 		}
 
 		void WriteValidation()
 		{
-			asio::async_write(m_socket, asio::buffer(&m_handShakeOut, sizeof(uint32_t)),
+			asio::async_write(m_socket, asio::buffer(&m_handShakeOut, sizeof(uint64_t)),
 				[this](std::error_code errorCode, std::size_t length)
 				{
 					if (!errorCode)
@@ -141,7 +148,7 @@ namespace sockets
 						}
 						else
 						{
-							m_handShakeOut = Encrypt(m_handShakeIn);
+							m_handShakeOut = Decrypt(m_handShakeIn);
 							WriteValidation();
 						}
 					}
@@ -160,9 +167,9 @@ namespace sockets
 		ThreadSafeQueue<message<Data>> m_messagesOut;
 		ThreadSafeQueue<owned_message<Data>>& m_messagesIn;
 
-		uint32_t m_handShakeOut{ 0 };
-		uint32_t m_handShakeIn{ 0 };
-		uint32_t m_handShakeCheck{ 0 };
+		uint64_t m_handShakeOut{ 0 };
+		uint64_t m_handShakeIn{ 0 };
+		uint64_t m_handShakeCheck{ 0 };
 
 	private:
 		void ReadHeader()

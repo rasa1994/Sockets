@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.29)
 
+enable_testing()
+
 set(VCPKG_ROOT "VCPKG_ROOT" CACHE STRING "VCPKG_ROOT")
 
 if (NOT DEFINED VCPKG_ROOT)
@@ -16,6 +18,8 @@ find_package(asio CONFIG REQUIRED)
 add_executable(main Main.cpp)
 
 add_subdirectory(Includes)
+add_subdirectory(Tests)
+
 target_sources(main PRIVATE
  Includes/ClientInterface.hpp
  Includes/CommonIncludes.h
