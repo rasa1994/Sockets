@@ -9,6 +9,10 @@ namespace sockets
     public:
         ThreadSafeQueue() = default;
         ThreadSafeQueue(const ThreadSafeQueue<DataType>&) = delete;
+		ThreadSafeQueue& operator=(const ThreadSafeQueue<DataType>&) = delete;
+		ThreadSafeQueue(ThreadSafeQueue<DataType>&&) = delete;
+		ThreadSafeQueue& operator=(ThreadSafeQueue<DataType>&&) = delete;
+
         virtual ~ThreadSafeQueue() { clear(); }
         const DataType& front() const
         {

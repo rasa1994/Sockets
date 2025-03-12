@@ -10,82 +10,110 @@ namespace sockets
 	class ClientInterface
 	{
 	public:
-		ClientInterface() : m_socket(m_asioContext)
-		{
+		ClientInterface() = default;
 
-		}
+		virtual ~ClientInterface();
 
-		virtual ~ClientInterface()
-		{
-			Disconnect();
-		}
+		ClientInterface(ClientInterface&) = delete;
+		ClientInterface& operator=(ClientInterface&) = delete;
+		ClientInterface(ClientInterface&&) = delete;
+		ClientInterface& operator=(ClientInterface&&) = delete;
 
-		bool Connect(const std::string& host, const uint16_t port)
-		{
-			try
-			{
-				asio::ip::tcp::resolver resolver(m_asioContext);
-				auto endPoints = resolver.resolve(host, std::to_string(port));
+		bool Connect(const std::string& host, uint16_t port);
 
-				m_connection = std::make_unique<connection<Data>>(
-					connection<Data>::Owner::Client,
-					m_asioContext,
-					asio::ip::tcp::socket(m_asioContext),
-					m_messagesIn
-				);
+		void Send(const message<Data>& msg);
 
-				m_connection->ConnectToServer(endPoints);
+		void Disconnect();
 
-				m_threadContext = std::jthread([this]()
-					{
-						m_asioContext.run();
-					});
-			}
-			catch (std::exception& e)
-			{
-				std::cerr << "Client Exception: " << e.what() << "\n";
-				return false;
-			}
-			return false;
-		}
+		bool IsConnected() const;
 
-		void Disconnect()
-		{
-			if (IsConnected())
-			{
-				m_connection->Disconnect();
-			}
-
-			m_asioContext.stop();
-
-			if (m_threadContext.joinable())
-			{
-				m_threadContext.join();
-			}
-
-			m_connection.release();
-		}
-
-		bool IsConnected() const
-		{
-			if (m_connection)
-			{
-				return m_connection->IsConnected();
-			}
-			return false;
-		}
-
-		ThreadSafeQueue<owned_message<Data>>& Incoming()
-		{
-			return m_messagesIn;
-		}
+		ThreadSafeQueue<owned_message<Data>>& Incoming();
 
 	protected:
 		asio::io_context m_asioContext;
 		std::jthread m_threadContext;
-		asio::ip::tcp::socket m_socket;
-		std::unique_ptr<connection<Data>> m_connection;
+		std::unique_ptr<Connection<Data>> m_connection;
 	private:
 		ThreadSafeQueue<owned_message<Data>> m_messagesIn;
 	};
+
+	
+	template <typename Data>
+	ClientInterface<Data>::~ClientInterface()
+	{
+		Disconnect();
+	}
+
+	template <typename Data>
+	bool ClientInterface<Data>::Connect(const std::string& host, const uint16_t port)
+	{
+		try
+		{
+			asio::ip::tcp::resolver resolver(m_asioContext);
+			auto endPoints = resolver.resolve(host, std::to_string(port));
+
+			m_connection = std::make_unique<Connection<Data>>(
+				Connection<Data>::Owner::Client,
+				m_asioContext,
+				asio::ip::tcp::socket(m_asioContext),
+				m_messagesIn
+			);
+
+			m_connection->ConnectToServer(endPoints);
+
+			m_threadContext = std::jthread([this]()
+			{
+				m_asioContext.run();
+			});
+		}
+		catch (std::exception& e)
+		{
+			std::cerr << "Client Exception: " << e.what() << "\n";
+			return false;
+		}
+		return true;
+	}
+
+	template <typename Data>
+	void ClientInterface<Data>::Send(const message<Data>& msg)
+	{
+		if (IsConnected())
+		{
+			m_connection->Send(msg);
+		}
+	}
+
+	template <typename Data>
+	void ClientInterface<Data>::Disconnect()
+	{
+		if (IsConnected())
+		{
+			m_connection->Disconnect();
+		}
+
+		m_asioContext.stop();
+
+		if (m_threadContext.joinable())
+		{
+			m_threadContext.join();
+		}
+
+		m_connection.release();
+	}
+
+	template <typename Data>
+	bool ClientInterface<Data>::IsConnected() const
+	{
+		if (m_connection)
+		{
+			return m_connection->IsConnected();
+		}
+		return false;
+	}
+
+	template <typename Data>
+	ThreadSafeQueue<owned_message<Data>>& ClientInterface<Data>::Incoming()
+	{
+		return m_messagesIn;
+	}
 }

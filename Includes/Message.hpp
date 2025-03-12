@@ -53,12 +53,12 @@ namespace sockets
     };
 
     template <typename Type>
-    class connection;
+    class Connection;
 
     template <typename Type>
     struct owned_message
     {
-        std::shared_ptr<connection<Type>> remote = nullptr;
+        std::shared_ptr<Connection<Type>> remote = nullptr;
         message<Type> msg;
 
         friend std::ostream& operator << (std::ostream& stream, const owned_message<Type>& msg)
